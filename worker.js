@@ -34,7 +34,7 @@ export default {
       if (p === "/api/_feed" && request.method === "GET") return feed(request, env, url);
       if (p === "/api/premium-checkout" && request.method === "POST") return premiumCheckout(request, env, url);
       if (p === "/stripe-webhook" && request.method === "POST") return stripeWebhook(request, env);
-      if (/^\/category\/[a-z0-9-]+\.html$/.test(p) && request.method === "GET") {
+      if (/^\/category\/[a-z0-9-]+(\.html)?$/.test(p) && request.method === "GET") {
         return renderCategoryPage(request, env, url);
       }
     } catch (e) {
@@ -347,7 +347,12 @@ function findDivBlockEnd(html, startIdx) {
 
 async function renderCategoryPage(request, env, url) {
   const category = url.pathname.replace(/^\/category\//, "").replace(/\.html$/, "");
-  const resp = await env.ASSETS.fetch(request);
+  // Fetch the canonical extensionless path — asking ASSETS for the `.html` form gets a 307
+  // (Cloudflare's default html_handling normalizes to extensionless), which would otherwise
+  // short-circuit this function before the D1 rendering ever runs.
+  const assetUrl = new URL(url);
+  assetUrl.pathname = `/category/${category}`;
+  const resp = await env.ASSETS.fetch(new Request(assetUrl, request));
   if (!resp.ok) return resp;
   const html = await resp.text();
 
