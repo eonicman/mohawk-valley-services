@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configure Your AI Receptionist — Aria Setup Wizard | Mohawk Valley Services</title>
+    <meta name="description" content="Set up your Claude-powered AI phone receptionist in 10 minutes. Choose your industry, features, and language preferences with simple icon selections. Enter your website and Aria learns your business automatically.">
+    <link rel="canonical" href="https://mohawkvalleyservices.com/configure.html">
+    <meta property="og:title" content="Configure Your AI Receptionist — Aria Setup Wizard">
+    <meta property="og:description" content="Claude-powered AI phone answering. Choose your industry, enter your website, and Aria learns your business automatically. 10-minute setup.">
+    <meta property="og:url" content="https://mohawkvalleyservices.com/configure.html">
+    <meta property="og:type" content="website">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Aria AI Receptionist Setup Wizard",
+      "description": "Configure your Claude-powered AI phone receptionist. Icon-driven setup wizard that learns your business from your website.",
+      "url": "https://mohawkvalleyservices.com/configure.html",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Any",
+      "offers": {
+        "@type": "Offer",
+        "price": "49",
+        "priceCurrency": "USD"
+      }
+    }
+    </script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1a1a2e; background: #f8f9fa; line-height: 1.6; }
+        .header { background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460); color: #fff; padding: 2rem 1rem; text-align: center; }
+        .header h1 { font-size: 2rem; margin-bottom: .5rem; }
+        .header p { font-size: 1rem; opacity: .9; }
+        .header .badge { display: inline-block; background: #e94560; color: #fff; font-size: .75rem; padding: .2rem .75rem; border-radius: 12px; margin-bottom: .5rem; font-weight: 600; letter-spacing: .5px; }
+        .breadcrumb { max-width: 900px; margin: 0 auto; padding: .75rem 1rem; font-size: .85rem; color: #888; }
+        .breadcrumb a { color: #3e6b3e; text-decoration: none; }
+        .breadcrumb a:hover { text-decoration: underline; }
+        .container { max-width: 900px; margin: 0 auto; padding: 1rem; }
+
+        /* Progress bar */
+        .progress { display: flex; justify-content: center; gap: 0; margin: 1.5rem 0 2rem; padding: 0 1rem; }
+        .progress-step { display: flex; align-items: center; gap: .4rem; font-size: .8rem; color: #999; }
+        .progress-step.active { color: #e94560; font-weight: 600; }
+        .progress-step.done { color: #4caf50; }
+        .progress-dot { width: 28px; height: 28px; border-radius: 50%; background: #ddd; display: flex; align-items: center; justify-content: center; font-size: .8rem; color: #fff; font-weight: 700; }
+        .progress-step.active .progress-dot { background: #e94560; }
+        .progress-step.done .progress-dot { background: #4caf50; }
+        .progress-connector { width: 30px; height: 2px; background: #ddd; align-self: center; }
+        .progress-connector.done { background: #4caf50; }
+
+        /* Steps */
+        .step { display: none; }
+        .step.active { display: block; }
+        .step-title { font-size: 1.4rem; color: #0f3460; margin-bottom: .25rem; }
+        .step-subtitle { color: #666; font-size: .95rem; margin-bottom: 1.5rem; }
+
+        /* Icon grid */
+        .icon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: .75rem; margin-bottom: 1.5rem; }
+        .icon-card { background: #fff; border: 2px solid #e0e0e0; border-radius: 10px; padding: 1rem .5rem; text-align: center; cursor: pointer; transition: all .2s; user-select: none; }
+        .icon-card:hover { border-color: #0f3460; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.1); }
+        .icon-card.selected { border-color: #e94560; background: #fff5f7; box-shadow: 0 0 0 3px rgba(233,69,96,.2); }
+        .icon-card .icon { font-size: 2rem; margin-bottom: .3rem; }
+        .icon-card .label { font-size: .82rem; font-weight: 600; color: #1a1a2e; }
+        .icon-card.multi { position: relative; }
+        .icon-card.multi::after { content: ''; display: none; }
+
+        /* Feature toggles */
+        .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: .75rem; margin-bottom: 1.5rem; }
+        .feature-toggle { background: #fff; border: 2px solid #e0e0e0; border-radius: 10px; padding: 1rem; cursor: pointer; transition: all .2s; user-select: none; }
+        .feature-toggle:hover { border-color: #0f3460; }
+        .feature-toggle.on { border-color: #4caf50; background: #f0faf0; }
+        .feature-toggle .toggle-icon { font-size: 1.5rem; margin-bottom: .25rem; }
+        .feature-toggle .toggle-label { font-size: .9rem; font-weight: 600; color: #1a1a2e; }
+        .feature-toggle .toggle-desc { font-size: .78rem; color: #888; margin-top: .2rem; }
+        .feature-toggle .check { float: right; color: #4caf50; font-size: 1.2rem; font-weight: 700; display: none; }
+        .feature-toggle.on .check { display: inline; }
+
+        /* Language pills */
+        .lang-grid { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1.5rem; }
+        .lang-pill { background: #fff; border: 2px solid #e0e0e0; border-radius: 20px; padding: .4rem 1rem; font-size: .85rem; cursor: pointer; transition: all .15s; user-select: none; }
+        .lang-pill:hover { border-color: #0f3460; }
+        .lang-pill.selected { border-color: #e94560; background: #fff5f7; font-weight: 600; }
+        .lang-pill .flag { margin-right: .3rem; }
+
+        /* URL input */
+        .url-section { background: #fff; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+        .url-section label { font-weight: 600; color: #0f3460; display: block; margin-bottom: .5rem; }
+        .url-section .hint { font-size: .82rem; color: #888; margin-bottom: .75rem; }
+        .url-input-group { display: flex; gap: .5rem; }
+        .url-input-group input { flex: 1; padding: .7rem 1rem; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem; }
+        .url-input-group input:focus { outline: none; border-color: #0f3460; }
+        .url-input-group button { padding: .7rem 1.5rem; background: #0f3460; color: #fff; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background .2s; white-space: nowrap; }
+        .url-input-group button:hover { background: #16213e; }
+        .url-input-group button:disabled { background: #999; cursor: not-allowed; }
+        .scrape-result { margin-top: 1rem; padding: 1rem; background: #f0faf0; border-radius: 8px; display: none; }
+        .scrape-result h4 { color: #3e6b3e; margin-bottom: .5rem; }
+        .scrape-result p { font-size: .85rem; color: #444; margin-bottom: .3rem; }
+        .scrape-error { background: #fff0f0; border-color: #e94560; }
+        .scrape-error h4 { color: #e94560; }
+
+        /* Contact form */
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; font-weight: 600; color: #0f3460; margin-bottom: .3rem; font-size: .9rem; }
+        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: .7rem 1rem; border: 2px solid #e0e0e0; border-radius: 8px; font-size: .95rem; font-family: inherit; }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline: none; border-color: #0f3460; }
+        .form-group textarea { resize: vertical; min-height: 80px; }
+        .form-group .optional { font-weight: 400; color: #999; font-size: .8rem; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .gotcha { position: absolute; left: -9999px; }
+
+        /* Summary */
+        .summary-card { background: #fff; border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+        .summary-card h3 { color: #0f3460; margin-bottom: .75rem; }
+        .summary-item { display: flex; justify-content: space-between; padding: .4rem 0; border-bottom: 1px solid #f0f0f0; font-size: .9rem; }
+        .summary-item:last-child { border-bottom: none; }
+        .summary-label { color: #666; }
+        .summary-value { color: #1a1a2e; font-weight: 600; }
+        .summary-value.languages { font-size: .85rem; }
+
+        /* Buttons */
+        .nav-buttons { display: flex; justify-content: space-between; margin-top: 2rem; gap: 1rem; }
+        .btn { padding: .8rem 2rem; border-radius: 8px; font-size: 1rem; font-weight: 600; text-decoration: none; cursor: pointer; border: none; transition: transform .2s, box-shadow .2s; }
+        .btn:hover { transform: scale(1.02); }
+        .btn-primary { background: #e94560; color: #fff; }
+        .btn-primary:hover { background: #c23152; }
+        .btn-secondary { background: #fff; color: #0f3460; border: 2px solid #0f3460; }
+        .btn-secondary:hover { background: #f0f7ff; }
+        .btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+        /* Claude badge */
+        .claude-badge { display: inline-flex; align-items: center; gap: .4rem; background: linear-gradient(135deg, #d97706, #b45309); color: #fff; padding: .3rem .8rem; border-radius: 6px; font-size: .75rem; font-weight: 700; letter-spacing: .3px; margin-bottom: .5rem; }
+        .claude-badge svg { width: 14px; height: 14px; fill: #fff; }
+
+        .footer { background: #1a1a2e; color: #aaa; text-align: center; padding: 1.5rem 1rem; font-size: .85rem; margin-top: 2rem; }
+        .footer a { color: #e94560; text-decoration: none; }
+        @media (max-width: 600px) {
+            .header h1 { font-size: 1.5rem; }
+            .icon-grid { grid-template-columns: repeat(3, 1fr); }
+            .feature-grid { grid-template-columns: 1fr; }
+            .form-row { grid-template-columns: 1fr; }
+            .progress { gap: 0; }
+            .progress-step span { display: none; }
+        }
+    </style>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2874546800688654" crossorigin="anonymous"></script>
+    <script defer data-domain="mohawkvalleyservices.com" src="https://stats.eonic.cloud/js/script.js"></script>
+</head>
+<body>
+    <div class="header">
+        <div class="claude-badge">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l7 4.5-7 4.5z"/></svg>
+            Powered by Claude
+        </div>
+        <h1>🤖 Configure Your AI Receptionist</h1>
+        <p>Set up Aria in 10 minutes — she'll know your business on day one.</p>
+    </div>
+
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="/">Home</a> &raquo; <a href="/aria.html">Aria AI Receptionist</a> &raquo; <strong>Setup Wizard</strong>
+    </nav>
+
+    <div class="container">
+
+        <!-- Progress indicator -->
+        <div class="progress">
+            <div class="progress-step active" data-step="1">
+                <div class="progress-dot">1</div>
+                <span>Industry</span>
+            </div>
+            <div class="progress-connector"></div>
+            <div class="progress-step" data-step="2">
+                <div class="progress-dot">2</div>
+                <span>Features</span>
+            </div>
+            <div class="progress-connector"></div>
+            <div class="progress-step" data-step="3">
+                <div class="progress-dot">3</div>
+                <span>Website</span>
+            </div>
+            <div class="progress-connector"></div>
+            <div class="progress-step" data-step="4">
+                <div class="progress-dot">4</div>
+                <span>Contact</span>
+            </div>
+        </div>
+
+        <!-- STEP 1: Industry -->
+        <div class="step active" id="step1">
+            <h2 class="step-title">What industry are you in?</h2>
+            <p class="step-subtitle">Choose one — Aria will customize her knowledge for your type of business.</p>
+
+            <div class="icon-grid" id="industry-grid">
+                <div class="icon-card" data-industry="plumbing" onclick="selectIndustry(this)">
+                    <div class="icon">🔧</div>
+                    <div class="label">Plumbing</div>
+                </div>
+                <div class="icon-card" data-industry="electrical" onclick="selectIndustry(this)">
+                    <div class="icon">⚡</div>
+                    <div class="label">Electrical</div>
+                </div>
+                <div class="icon-card" data-industry="hvac" onclick="selectIndustry(this)">
+                    <div class="icon">❄️</div>
+                    <div class="label">HVAC</div>
+                </div>
+                <div class="icon-card" data-industry="general-contracting" onclick="selectIndustry(this)">
+                    <div class="icon">🏗️</div>
+                    <div class="label">Contracting</div>
+                </div>
+                <div class="icon-card" data-industry="landscaping" onclick="selectIndustry(this)">
+                    <div class="icon">🌿</div>
+                    <div class="label">Landscaping</div>
+                </div>
+                <div class="icon-card" data-industry="roofing" onclick="selectIndustry(this)">
+                    <div class="icon">🏠</div>
+                    <div class="label">Roofing</div>
+                </div>
+                <div class="icon-card" data-industry="painting" onclick="selectIndustry(this)">
+                    <div class="icon">🎨</div>
+                    <div class="label">Painting</div>
+                </div>
+                <div class="icon-card" data-industry="cleaning" onclick="selectIndustry(this)">
+                    <div class="icon">✨</div>
+                    <div class="label">Cleaning</div>
+                </div>
+                <div class="icon-card" data-industry="computers" onclick="selectIndustry(this)">
+                    <div class="icon">💻</div>
+                    <div class="label">IT / Computer</div>
+                </div>
+                <div class="icon-card" data-industry="well-septic" onclick="selectIndustry(this)">
+                    <div class="icon">💧</div>
+                    <div class="label">Well &amp; Septic</div>
+                </div>
+                <div class="icon-card" data-industry="automotive" onclick="selectIndustry(this)">
+                    <div class="icon">🚗</div>
+                    <div class="label">Auto Repair</div>
+                </div>
+                <div class="icon-card" data-industry="restaurant" onclick="selectIndustry(this)">
+                    <div class="icon">🍽️</div>
+                    <div class="label">Restaurant</div>
+                </div>
+                <div class="icon-card" data-industry="dental" onclick="selectIndustry(this)">
+                    <div class="icon">🦷</div>
+                    <div class="label">Dental</div>
+                </div>
+                <div class="icon-card" data-industry="real-estate" onclick="selectIndustry(this)">
+                    <div class="icon">🏡</div>
+                    <div class="label">Real Estate</div>
+                </div>
+                <div class="icon-card" data-industry="other" onclick="selectIndustry(this)">
+                    <div class="icon">📋</div>
+                    <div class="label">Other</div>
+                </div>
+            </div>
+
+            <div class="nav-buttons">
+                <span></span>
+                <button class="btn btn-primary" onclick="goStep(2)" id="step1-next" disabled>Next: Choose Features →</button>
+            </div>
+        </div>
+
+        <!-- STEP 2: Features -->
+        <div class="step" id="step2">
+            <h2 class="step-title">What should Aria handle?</h2>
+            <p class="step-subtitle">Tap to toggle — choose as many as you need.</p>
+
+            <div class="feature-grid" id="feature-grid">
+                <div class="feature-toggle on" data-feature="answering" onclick="toggleFeature(this)">
+                    <span class="check">✓</span>
+                    <div class="toggle-icon">📞</div>
+                    <div class="toggle-label">Call Answering</div>
+                    <div class="toggle-desc">Answer every call 24/7</div>
+                </div>
+                <div class="feature-toggle on" data-feature="appointments" onclick="toggleFeature(this)">
+                    <span class="check">✓</span>
+                    <div class="toggle-icon">📅</div>
+                    <div class="toggle-label">Appointments</div>
+                    <div class="toggle-desc">Book & confirm on the call</div>
+                </div>
+                <div class="feature-toggle on" data-feature="messages" onclick="toggleFeature(this)">
+                    <span class="check">✓</span>
+                    <div class="toggle-icon">💬</div>
+                    <div class="toggle-label">Messages</div>
+                    <div class="toggle-desc">Take & relay detailed messages</div>
+                </div>
+                <div class="feature-toggle" data-feature="sms" onclick="toggleFeature(this)">
+                    <span class="check">✓</span>
+                    <div class="toggle-icon">📱</div>
+                    <div class="toggle-label">SMS Follow-up</div>
+                    <div class="toggle-desc">Text callers after missed calls</div>
+                </div>
+                <div class="feature-toggle" data-feature="routing" onclick="toggleFeature(this)">
+                    <span class="check">✓</span>
+                    <div class="toggle-icon">🔀</div>
+                    <div class="toggle-label">Call Routing</div>
+                    <div class="toggle-desc">Transfer urgent calls to you</div>
+                </div>
+                <div class="feature-toggle" data-feature="website" onclick="toggleFeature(this)">
+                    <span class="check">✓</span>
+                    <div class="toggle-icon">🌐</div>
+                    <div class="toggle-label">Website + Chat</div>
+                    <div class="toggle-desc">Custom site with AI web chat</div>
+                </div>
+                <div class="feature-toggle" data-feature="booking" onclick="toggleFeature(this)">
+                    <span class="check">✓</span>
+                    <div class="toggle-icon">📆</div>
+                    <div class="toggle-label">Online Booking</div>
+                    <div class="toggle-desc">Web-based scheduling page</div>
+                </div>
+                <div class="feature-toggle" data-feature="knowledge" onclick="toggleFeature(this)">
+                    <span class="check">✓</span>
+                    <div class="toggle-icon">🧠</div>
+                    <div class="toggle-label">Knowledge Base</div>
+                    <div class="toggle-desc">Deep business knowledge (menu, policies)</div>
+                </div>
+            </div>
+
+            <h3 style="color:#0f3460;margin:1rem 0 .5rem;font-size:1.1rem;">Languages</h3>
+            <p style="color:#888;font-size:.85rem;margin-bottom:.75rem;">Select every language your callers might speak. English is included by default.</p>
+            <div class="lang-grid" id="lang-grid">
+                <div class="lang-pill selected" data-lang="en" onclick="toggleLang(this)"><span class="flag">🇺🇸</span> English</div>
+                <div class="lang-pill selected" data-lang="es" onclick="toggleLang(this)"><span class="flag">🇪🇸</span> Spanish</div>
+                <div class="lang-pill" data-lang="fr" onclick="toggleLang(this)"><span class="flag">🇫🇷</span> French</div>
+                <div class="lang-pill" data-lang="zh" onclick="toggleLang(this)"><span class="flag">🇨🇳</span> Mandarin</div>
+                <div class="lang-pill" data-lang="pt" onclick="toggleLang(this)"><span class="flag">🇧🇷</span> Portuguese</div>
+                <div class="lang-pill" data-lang="ko" onclick="toggleLang(this)"><span class="flag">🇰🇷</span> Korean</div>
+                <div class="lang-pill" data-lang="ar" onclick="toggleLang(this)"><span class="flag">🇸🇦</span> Arabic</div>
+                <div class="lang-pill" data-lang="hi" onclick="toggleLang(this)"><span class="flag">🇮🇳</span> Hindi</div>
+                <div class="lang-pill" data-lang="de" onclick="toggleLang(this)"><span class="flag">🇩🇪</span> German</div>
+                <div class="lang-pill" data-lang="it" onclick="toggleLang(this)"><span class="flag">🇮🇹</span> Italian</div>
+                <div class="lang-pill" data-lang="ja" onclick="toggleLang(this)"><span class="flag">🇯🇵</span> Japanese</div>
+                <div class="lang-pill" data-lang="ru" onclick="toggleLang(this)"><span class="flag">🇷🇺</span> Russian</div>
+            </div>
+
+            <div class="nav-buttons">
+                <button class="btn btn-secondary" onclick="goStep(1)">← Back</button>
+                <button class="btn btn-primary" onclick="goStep(3)">Next: Your Website →</button>
+            </div>
+        </div>
+
+        <!-- STEP 3: Website scraping -->
+        <div class="step" id="step3">
+            <h2 class="step-title">Do you have a website?</h2>
+            <p class="step-subtitle">Enter your URL and Aria will learn your business automatically — hours, services, location, everything.</p>
+
+            <div class="url-section">
+                <label for="website-url">Your website URL</label>
+                <p class="hint">We'll scan your site so Aria knows your business name, services, hours, and location before she takes her first call.</p>
+                <div class="url-input-group">
+                    <input type="url" id="website-url" placeholder="https://www.yourbusiness.com" autocomplete="url">
+                    <button onclick="scrapeWebsite()" id="scrape-btn">Scan My Site</button>
+                </div>
+                <div id="scrape-result" class="scrape-result" style="display:none;"></div>
+                <div id="scrape-error" class="scrape-result scrape-error" style="display:none;"></div>
+            </div>
+
+            <p style="text-align:center;color:#888;font-size:.9rem;margin:1rem 0;">— or —</p>
+
+            <div class="form-group" style="text-align:center;">
+                <button class="btn btn-secondary" onclick="goStep(4)" style="display:inline-block;">I don't have a website yet →</button>
+            </div>
+
+            <div class="nav-buttons">
+                <button class="btn btn-secondary" onclick="goStep(2)">← Back</button>
+                <button class="btn btn-primary" onclick="goStep(4)">Next: Your Details →</button>
+            </div>
+        </div>
+
+        <!-- STEP 4: Contact details -->
+        <div class="step" id="step4">
+            <h2 class="step-title">Almost there!</h2>
+            <p class="step-subtitle">Tell us where to reach you and we'll set up your AI receptionist.</p>
+
+            <!-- Summary card -->
+            <div class="summary-card" id="summary-card">
+                <h3>📋 Your Aria Configuration</h3>
+                <div id="summary-items"></div>
+            </div>
+
+            <!-- Contact form -->
+            <form id="contact-form" action="/lead" method="POST" onsubmit="return submitForm(event)">
+                <input type="text" name="_gotcha" class="gotcha" tabindex="-1" autocomplete="off">
+                <input type="hidden" name="source" id="form-source" value="aria-configure">
+                <input type="hidden" name="interest" id="form-interest" value="aria-configure">
+                <input type="hidden" name="config_json" id="form-config">
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="form-name">Your Name</label>
+                        <input type="text" id="form-name" name="name" placeholder="Jane Smith" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="form-business">Business Name</label>
+                        <input type="text" id="form-business" name="business" placeholder="Smith's Plumbing">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="form-email">Email <span class="optional">(required)</span></label>
+                        <input type="email" id="form-email" name="email" placeholder="jane@smithsplumbing.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="form-phone">Phone <span class="optional">(required)</span></label>
+                        <input type="tel" id="form-phone" name="phone" placeholder="(555) 123-4567" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="form-website">Your Website <span class="optional">(if you have one)</span></label>
+                    <input type="url" id="form-website-display" name="website" placeholder="https://www.yourbusiness.com">
+                </div>
+                <div class="form-group">
+                    <label for="form-notes">Anything else Aria should know?</label>
+                    <textarea id="form-notes" name="message" placeholder="Special hours, services, anything about your business..."></textarea>
+                </div>
+
+                <!-- Recommended plan -->
+                <div id="plan-recommendation" class="summary-card" style="background:linear-gradient(135deg,#f0f7ff,#e8f0fe);border:2px solid #0f3460;">
+                    <h3 style="color:#0f3460;">💡 Recommended Plan</h3>
+                    <p id="plan-name" style="font-size:1.2rem;font-weight:700;color:#e94560;margin:.5rem 0;"></p>
+                    <p id="plan-reason" style="font-size:.9rem;color:#555;"></p>
+                    <a id="plan-link" href="#" class="btn btn-primary" style="display:inline-block;margin-top:.75rem;text-decoration:none;">Get Started →</a>
+                </div>
+
+                <div class="nav-buttons" style="margin-top:1.5rem;">
+                    <button class="btn btn-secondary" onclick="goStep(3)">← Back</button>
+                    <button type="submit" class="btn btn-primary" id="submit-btn">Submit &amp; Get Started</button>
+                </div>
+            </form>
+        </div>
+
+    </div>
+
+    <footer class="footer">
+        <p>&copy; 2026 Mohawk Valley Services &mdash; Mohawk Valley NY Local Business Directory</p>
+        <p style="margin-top:.5rem;"><a href="/">Home</a> &bull; <a href="/aria.html">Aria AI Receptionist</a> &bull; <a href="/contact.html">Contact Us</a> &bull; <a href="/premium.html">Premium Listings</a> &bull; <a href="/privacy.html">Privacy Policy</a></p>
+    </footer>
+
+    <script>
+    // Wizard state
+    const state = {
+        industry: '',
+        features: ['answering', 'appointments', 'messages'],
+        languages: ['en', 'es'],
+        website: '',
+        scrapeData: null,
+        step: 1,
+    };
+
+    const industryNames = {
+        plumbing: 'Plumbing', electrical: 'Electrical', hvac: 'HVAC',
+        'general-contracting': 'General Contracting', landscaping: 'Landscaping',
+        roofing: 'Roofing & Siding', painting: 'Painting', cleaning: 'Cleaning',
+        computers: 'IT & Computer Repair', 'well-septic': 'Well & Septic',
+        automotive: 'Auto Repair', restaurant: 'Restaurant', dental: 'Dental',
+        'real-estate': 'Real Estate', other: 'Other',
+    };
+
+    const featureNames = {
+        answering: 'Call Answering', appointments: 'Appointments', messages: 'Messages',
+        sms: 'SMS Follow-up', routing: 'Call Routing', website: 'Website + Chat',
+        booking: 'Online Booking', knowledge: 'Knowledge Base',
+    };
+
+    const langNames = {
+        en: 'English', es: 'Spanish', fr: 'French', zh: 'Mandarin',
+        pt: 'Portuguese', ko: 'Korean', ar: 'Arabic', hi: 'Hindi',
+        de: 'German', it: 'Italian', ja: 'Japanese', ru: 'Russian',
+    };
+
+    // Industry selection
+    function selectIndustry(el) {
+        document.querySelectorAll('#industry-grid .icon-card').forEach(c => c.classList.remove('selected'));
+        el.classList.add('selected');
+        state.industry = el.dataset.industry;
+        document.getElementById('step1-next').disabled = false;
+    }
+
+    // Feature toggles
+    function toggleFeature(el) {
+        el.classList.toggle('on');
+        const f = el.dataset.feature;
+        if (state.features.includes(f)) {
+            state.features = state.features.filter(x => x !== f);
+        } else {
+            state.features.push(f);
+        }
+    }
+
+    // Language toggles
+    function toggleLang(el) {
+        el.classList.toggle('selected');
+        const l = el.dataset.lang;
+        if (state.languages.includes(l)) {
+            state.languages = state.languages.filter(x => x !== l);
+        } else {
+            state.languages.push(l);
+        }
+    }
+
+    // Step navigation
+    function goStep(n) {
+        if (n === 2 && !state.industry) { alert('Please choose an industry first.'); return; }
+        document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+        document.getElementById('step' + n).classList.add('active');
+        // Update progress
+        document.querySelectorAll('.progress-step').forEach(ps => {
+            const sn = parseInt(ps.dataset.step);
+            ps.classList.remove('active', 'done');
+            if (sn < n) ps.classList.add('done');
+            else if (sn === n) ps.classList.add('active');
+        });
+        document.querySelectorAll('.progress-connector').forEach((c, i) => {
+            c.classList.toggle('done', i < n - 1);
+        });
+        state.step = n;
+        if (n === 4) buildSummary();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Scrape website
+    async function scrapeWebsite() {
+        const url = document.getElementById('website-url').value.trim();
+        if (!url) { alert('Please enter a website URL.'); return; }
+        const btn = document.getElementById('scrape-btn');
+        btn.disabled = true;
+        btn.textContent = 'Scanning...';
+        try {
+            const resp = await fetch('/api/scrape-website', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url }),
+            });
+            const data = await resp.json();
+            if (data.status === 'ok') {
+                state.scrapeData = data;
+                state.website = url;
+                document.getElementById('scrape-error').style.display = 'none';
+                const result = document.getElementById('scrape-result');
+                result.style.display = 'block';
+                let html = '<h4>✅ Found your business info!</h4>';
+                if (data.title) html += `<p><strong>Business:</strong> ${data.title}</p>`;
+                if (data.description) html += `<p><strong>Description:</strong> ${data.description.slice(0, 200)}</p>`;
+                if (data.industry) html += `<p><strong>Industry detected:</strong> ${industryNames[data.industry] || data.industry}</p>`;
+                if (data.structured) {
+                    if (data.structured.phone) html += `<p><strong>Phone:</strong> ${data.structured.phone}</p>`;
+                    if (data.structured.address) html += `<p><strong>Address:</strong> ${data.structured.address}</p>`;
+                    if (data.structured.hours) html += `<p><strong>Hours:</strong> ${data.structured.hours}</p>`;
+                }
+                if (data.services && data.services.length) {
+                    html += `<p><strong>Services found:</strong> ${data.services.slice(0, 6).join(', ')}</p>`;
+                }
+                if (data.phones && data.phones.length) html += `<p><strong>Phone numbers:</strong> ${data.phones.join(', ')}</p>`;
+                if (data.emails && data.emails.length) html += `<p><strong>Emails:</strong> ${data.emails.join(', ')}</p>`;
+                html += '<p style="font-size:.82rem;color:#888;margin-top:.5rem;">This info will be pre-loaded into Aria\'s knowledge base.</p>';
+                result.innerHTML = html;
+                // Auto-fill industry if detected
+                if (data.industry && !state.industry) {
+                    const card = document.querySelector(`.icon-card[data-industry="${data.industry}"]`);
+                    if (card) selectIndustry(card);
+                }
+                // Pre-fill form fields
+                if (data.structured && data.structured.phone) {
+                    const phoneInput = document.getElementById('form-phone');
+                    if (phoneInput && !phoneInput.value) phoneInput.value = data.structured.phone;
+                }
+                if (data.title) {
+                    const bizInput = document.getElementById('form-business');
+                    if (bizInput && !bizInput.value) bizInput.value = data.title;
+                }
+                if (data.emails && data.emails.length) {
+                    const emailInput = document.getElementById('form-email');
+                    if (emailInput && !emailInput.value) emailInput.value = data.emails[0];
+                }
+                const websiteInput = document.getElementById('form-website-display');
+                if (websiteInput) websiteInput.value = url;
+            } else {
+                document.getElementById('scrape-result').style.display = 'none';
+                const err = document.getElementById('scrape-error');
+                err.style.display = 'block';
+                err.innerHTML = `<h4>⚠️ Couldn't scan that site</h4><p>${data.message || 'The site may not be accessible. No worries — you can fill in the details manually.'}</p>`;
+            }
+        } catch (e) {
+            document.getElementById('scrape-result').style.display = 'none';
+            const err = document.getElementById('scrape-error');
+            err.style.display = 'block';
+            err.innerHTML = `<h4>⚠️ Something went wrong</h4><p>We couldn't reach that URL. No worries — you can fill in the details manually.</p>`;
+        }
+        btn.disabled = false;
+        btn.textContent = 'Scan My Site';
+    }
+
+    // Build summary
+    function buildSummary() {
+        const items = document.getElementById('summary-items');
+        let html = '';
+        html += `<div class="summary-item"><span class="summary-label">Industry</span><span class="summary-value">${industryNames[state.industry] || state.industry || 'Not selected'}</span></div>`;
+        html += `<div class="summary-item"><span class="summary-label">Features</span><span class="summary-value">${state.features.map(f => featureNames[f] || f).join(', ') || 'None'}</span></div>`;
+        html += `<div class="summary-item"><span class="summary-label">Languages</span><span class="summary-value languages">${state.languages.map(l => langNames[l] || l).join(', ')}</span></div>`;
+        if (state.website) {
+            html += `<div class="summary-item"><span class="summary-label">Website</span><span class="summary-value">${state.website}</span></div>`;
+        }
+        if (state.scrapeData && state.scrapeData.services && state.scrapeData.services.length) {
+            html += `<div class="summary-item"><span class="summary-label">Services detected</span><span class="summary-value languages">${state.scrapeData.services.slice(0, 5).join(', ')}</span></div>`;
+        }
+        items.innerHTML = html;
+
+        // Plan recommendation
+        const plan = recommendPlan();
+        document.getElementById('plan-name').textContent = plan.name;
+        document.getElementById('plan-reason').textContent = plan.reason;
+        document.getElementById('plan-link').href = plan.link;
+    }
+
+    function recommendPlan() {
+        const needsSite = state.features.includes('website') || state.features.includes('booking');
+        const needsKnowledge = state.features.includes('knowledge');
+        const manyLangs = state.languages.length > 5;
+
+        if (needsKnowledge || manyLangs) {
+            return {
+                name: 'Aria Full — $149/mo',
+                reason: 'You selected knowledge base or multilingual support. Aria Full gives you unlimited minutes, 17 languages, and a custom-trained AI that knows your business inside and out.',
+                link: 'https://buy.stripe.com/fZu8wR0xp34nggd2kH5c404'
+            };
+        }
+        if (needsSite) {
+            return {
+                name: 'Aria Site — $79/mo',
+                reason: 'You want a website and/or online booking. Aria Site includes a custom website, AI web chat, and booking — all managed for you.',
+                link: 'https://buy.stripe.com/7sY7sN3JBcEXfc95wT5c401'
+            };
+        }
+        return {
+            name: 'Aria Voice — $49/mo',
+            reason: 'For call answering, messages, and appointments. Aria Voice is all you need to never miss a call again.',
+            link: 'https://buy.stripe.com/eVq5kFdkbbATggd3oL5c400'
+        };
+    }
+
+    // Submit form
+    async function submitForm(e) {
+        e.preventDefault();
+        const form = e.target;
+        const config = {
+            industry: state.industry,
+            features: state.features,
+            languages: state.languages,
+            website: state.website,
+            scrapeData: state.scrapeData ? {
+                title: state.scrapeData.title,
+                industry: state.scrapeData.industry,
+                phones: state.scrapeData.phones,
+                emails: state.scrapeData.emails,
+                services: state.scrapeData.services,
+                structured: state.scrapeData.structured,
+            } : null,
+        };
+        document.getElementById('form-config').value = JSON.stringify(config);
+        document.getElementById('form-interest').value = 'aria-' + (state.industry || 'configure');
+
+        const btn = document.getElementById('submit-btn');
+        btn.disabled = true;
+        btn.textContent = 'Submitting...';
+
+        try {
+            const resp = await fetch('/lead', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams(new FormData(form)).toString(),
+            });
+            if (resp.ok) {
+                const text = await resp.text();
+                document.querySelector('.container').innerHTML = `
+                    <div style="text-align:center;padding:4rem 1rem;">
+                        <div style="font-size:4rem;margin-bottom:1rem;">🎉</div>
+                        <h2 style="color:#0f3460;margin-bottom:.5rem;">You're all set!</h2>
+                        <p style="font-size:1.1rem;color:#555;margin-bottom:1rem;">We received your configuration. Our team will set up your AI receptionist and reach out within 24 hours.</p>
+                        <p style="font-size:1rem;color:#888;margin-bottom:2rem;">In the meantime, call <a href="tel:8552724773" style="color:#e94560;font-weight:700;">(855) ARIA-773</a> to hear Aria in action.</p>
+                        <a href="/" class="btn btn-primary" style="display:inline-block;text-decoration:none;">← Back to Directory</a>
+                    </div>
+                `;
+            } else {
+                throw new Error('Form submission failed');
+            }
+        } catch (err) {
+            alert('Something went wrong. Please try again or call us at (855) ARIA-773.');
+            btn.disabled = false;
+            btn.textContent = 'Submit & Get Started';
+        }
+    }
+
+    // Pre-fill website URL from step 3
+    document.getElementById('form-website-display')?.addEventListener('focus', function() {
+        if (!this.value && state.website) this.value = state.website;
+    });
+    </script>
+</body>
+</html>

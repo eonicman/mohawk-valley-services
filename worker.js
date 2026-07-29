@@ -18,6 +18,7 @@ export default {
           ? handleLead(request, env, url)
           : Response.redirect(url.origin + "/contact", 303);
       }
+      if (p === "/api/scrape-website" && request.method === "POST") return scrapeWebsite(request);
       if (p === "/api/diy-request" && request.method === "POST") return diyRequest(request, env, url);
       if (p === "/api/diy-request/update" && request.method === "POST") return diyRequestUpdate(request, env);
       if (p === "/api/diy-review" && request.method === "POST") return diyReview(request, env, url);
@@ -80,6 +81,115 @@ async function handleLead(request, env, url) {
     return html(thankYouPage(url.host, name));
   } catch (e) {
     return html(errorPage(url.host), 500);
+  }
+}
+
+/* ---------- website scraper for Aria onboarding ---------- */
+async function scrapeWebsite(request) {
+  let data;
+  try { data = await request.json(); } catch { return json({ status: "error", message: "invalid json" }, 400); }
+  const url = (data.url || "").trim();
+  if (!url || !/^https?:\/\//i.test(url)) return json({ status: "error", message: "valid url required" }, 400);
+
+  try {
+    const resp = await fetch(url, {
+      headers: { "User-Agent": "AriaBot/1.0 (+https://mohawkvalleyservices.com)", "Accept": "text/html" },
+      redirect: "follow",
+    });
+    if (!resp.ok) return json({ status: "error", message: `fetch failed: ${resp.status}` }, 502);
+    const html = await resp.text();
+
+    // Extract structured data from the page
+    const title = (html.match(/<title[^>]*>([^<]+)<\/title>/i) || [,""])[1].trim();
+    const desc = (html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i) || [,""])[1].trim()
+              || (html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']description["']/i) || [,""])[1].trim();
+
+    // Try JSON-LD for structured business data
+    let structured = {};
+    const ldMatches = html.match(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi) || [];
+    for (const m of ldMatches) {
+      try {
+        const obj = JSON.parse(m.replace(/<\/?script[^>]*>/gi, "").trim());
+        if (obj["@type"]) {
+          if (obj["@type"] === "LocalBusiness" || obj["@type"] === "AutoRepair" || obj["@type"] === "Restaurant" || obj["@type"] === "Dentist" || obj["@type"] === "HVACBusiness" || obj["@type"] === "Plumber" || obj["@type"] === "Electrician" || obj["@type"] === "HousePainter" || obj["@type"] === "Landscaper" || obj["@type"] === "GeneralContractor") {
+            structured = {
+              name: obj.name || "",
+              phone: obj.telephone || "",
+              address: obj.address ? (typeof obj.address === "string" ? obj.address : [obj.address.streetAddress, obj.address.addressLocality, obj.address.addressRegion, obj.address.postalCode].filter(Boolean).join(", ")) : "",
+              hours: obj.openingHours || (obj.openingHoursSpecification || []).map(h => `${h.dayOfWeek}: ${h.opens}-${h.closes}`).join("; "),
+              description: obj.description || "",
+              areaServed: obj.areaServed ? (Array.isArray(obj.areaServed) ? obj.areaServed.map(a => typeof a === "string" ? a : a.name).join(", ") : (typeof obj.areaServed === "string" ? obj.areaServed : obj.areaServed.name || "")) : "",
+              url: obj.url || url,
+            };
+          }
+        }
+      } catch (e) { /* skip malformed LD */ }
+    }
+
+    // Extract phone numbers from page text
+    const phoneRegex = /(?:\+?1[\s.-]?)?(?:\(?\d{3}\)?[\s.-]?)?\d{3}[\s.-]?\d{4}/g;
+    const pageText = html.replace(/<script[\s\S]*?<\/script>/gi, "").replace(/<style[\s\S]*?<\/style>/gi, "").replace(/<[^>]+>/g, " ");
+    const phones = [...new Set((pageText.match(phoneRegex) || []))].slice(0, 5);
+
+    // Extract email addresses
+    const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+    const emails = [...new Set((pageText.match(emailRegex) || []))].filter(e => !e.endsWith(".png") && !e.endsWith(".jpg")).slice(0, 5);
+
+    // Extract social links
+    const socialRegex = /href=["'](https?:\/\/(?:www\.)?(?:facebook|instagram|twitter|x|linkedin|youtube|tiktok)\.com\/[^"']+)["']/gi;
+    const socials = [...new Set([...html.matchAll(socialRegex)].map(m => m[1]))].slice(0, 10);
+
+    // Extract services/menu items from common patterns
+    const servicePatterns = [
+      /<h[2-4][^>]*>([^<]*(?:service|offering|we\s+(?:do|provide|offer|specialize)|our\s+(?:service|team))[^<]*)<\/h[2-4]>/gi,
+      /<li[^>]*>([^<]*(?:service|repair|install|maintenance|inspection|cleaning|consultation)[^<]*)<\/li>/gi,
+    ];
+    const services = [];
+    for (const pat of servicePatterns) {
+      const matches = [...html.matchAll(pat)];
+      for (const m of matches) {
+        const s = m[1].trim().replace(/\s+/g, " ").slice(0, 100);
+        if (s.length > 5 && s.length < 100 && !services.includes(s)) services.push(s);
+      }
+    }
+
+    // Determine industry from title/meta content
+    const fullText = (title + " " + desc + " " + structured.description).toLowerCase();
+    const industryMap = {
+      plumbing: ["plumb", "plumbing", "pipe", "drain", "leak", "sewer"],
+      electrical: ["electric", "wiring", "lighting", "panel", "outlet", "circuit"],
+      hvac: ["hvac", "heating", "cooling", "air conditioning", "furnace", "ac repair"],
+      landscaping: ["landscap", "lawn", "mowing", "garden", "yard", "tree service"],
+      "general-contracting": ["contractor", "renovation", "remodel", "construction", "building"],
+      roofing: ["roof", "siding", "gutter", "shingle"],
+      painting: ["paint", "painting", "interior", "exterior coating"],
+      cleaning: ["cleaning", "janitorial", "maid", "housekeep"],
+      computers: ["computer", "it support", "network", "tech support", "software"],
+      "well-septic": ["well", "septic", "water treatment", "water pump"],
+      automotive: ["auto", "car repair", "mechanic", "oil change", "brake"],
+      restaurant: ["restaurant", "cafe", "bakery", "catering", "diner"],
+      dental: ["dental", "dentist", "orthodontist", "oral health"],
+      "real-estate": ["real estate", "property", "rental", "realtor"],
+    };
+    let industry = "";
+    for (const [key, keywords] of Object.entries(industryMap)) {
+      if (keywords.some(kw => fullText.includes(kw))) { industry = key; break; }
+    }
+
+    return json({
+      status: "ok",
+      url,
+      title: title.slice(0, 200),
+      description: desc.slice(0, 500),
+      structured: Object.keys(structured).length ? structured : null,
+      phones,
+      emails,
+      socials,
+      services: services.slice(0, 20),
+      industry,
+    });
+  } catch (e) {
+    return json({ status: "error", message: "scrape failed: " + e.message }, 500);
   }
 }
 
