@@ -1,12 +1,19 @@
-// Directory-site Worker: lead capture + DIY feature backend + static asset serving.
+// Directory-site Worker: lead capture + DIY feature backend + premium listings + static assets.
 //   POST /lead                     -> store contact/Aria lead in D1 (leads)
 //   POST /api/diy-request          -> return existing guide OR log a new request (diy_requests)
 //   POST /api/diy-request/update   -> attach email to a request (waitlist)
 //   POST /api/diy-review           -> store a guide review (diy_reviews, pending moderation)
 //   POST /api/diy-analytics/pageview -> store a pageview (diy_analytics)
 //   GET  /api/diy-top?category=..  -> top requested projects for a category (live ranking)
+//   GET  /category/*.html          -> static page with the .business-list re-rendered from D1
+//                                      (premium listings first), so premium activation shows up
+//                                      without hand-editing HTML
+//   POST /api/premium-checkout     -> upsert a `businesses` row, create a Stripe Checkout Session,
+//                                      return {url} for the client to redirect to
+//   POST /stripe-webhook           -> verify Stripe signature, activate/cancel premium on
+//                                      checkout.session.completed / customer.subscription.deleted
 //   everything else                -> static assets (env.ASSETS), unchanged
-// D1 binding: env.LEADS -> database "directory-leads".
+// D1 binding: env.LEADS -> database "directory-leads" (tables: leads, diy_*, businesses).
 
 export default {
   async fetch(request, env, ctx) {
@@ -25,6 +32,11 @@ export default {
       if (p === "/api/diy-analytics/pageview" && request.method === "POST") return diyAnalytics(request, env, url);
       if (p === "/api/diy-top" && request.method === "GET") return diyTop(request, env, url);
       if (p === "/api/_feed" && request.method === "GET") return feed(request, env, url);
+      if (p === "/api/premium-checkout" && request.method === "POST") return premiumCheckout(request, env, url);
+      if (p === "/stripe-webhook" && request.method === "POST") return stripeWebhook(request, env);
+      if (/^\/category\/[a-z0-9-]+\.html$/.test(p) && request.method === "GET") {
+        return renderCategoryPage(request, env, url);
+      }
     } catch (e) {
       return json({ status: "error", message: "server error" }, 500);
     }
@@ -281,6 +293,188 @@ async function feed(request, env, url) {
     `SELECT id, site, category, project, email, created_at
      FROM diy_requests WHERE id > ? AND site = ? ORDER BY id LIMIT 50`).bind(ad, url.host).all();
   return json({ status: "ok", leads: leads.results || [], diy: diy.results || [] });
+}
+
+/* ---------- premium listings: dynamic category rendering ---------- */
+function escapeHtml(s) {
+  return S(s, 2000).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function bizCardHtml(b) {
+  const cls = b.premium ? "biz-card premium" : "biz-card";
+  const badge = b.premium ? `<div class="premium-badge">★ Featured</div>` : "";
+  const phone = b.phone
+    ? `<span itemprop="telephone" style="display:block;margin:.2rem 0;">&#9742; ${escapeHtml(b.phone)}</span>`
+    : "";
+  const address = b.address
+    ? `<span itemprop="address" style="display:block;margin:.2rem 0;">\u{1F4CD} ${escapeHtml(b.address)}</span>`
+    : "";
+  const website = b.website
+    ? `<div style="margin-top:.4rem;"><a href="${escapeHtml(b.website)}" target="_blank" rel="noopener sponsored" style="color:#3e6b3e;text-decoration:none;font-size:.85rem;font-weight:500;">\u{1F310} ${escapeHtml(b.website.replace(/^https?:\/\//, "").replace(/\/$/, ""))}</a></div>`
+    : "";
+  return `<div class="${cls}" itemscope itemtype="https://schema.org/LocalBusiness">
+${badge}              <h3 itemprop="name">${escapeHtml(b.name)}</h3>
+              <div class="biz-cat">${escapeHtml(b.category)}</div>
+              <div class="biz-info">
+                ${phone}
+                ${address}
+              </div>
+              ${website}
+            </div>`;
+}
+
+const PREMIUM_CSS = `<style>.biz-card.premium{border-left-color:#d4af37!important;box-shadow:0 2px 10px rgba(212,175,55,.25);position:relative}.premium-badge{display:inline-block;background:#d4af37;color:#1a1a2e;font-size:.7rem;font-weight:700;padding:.15rem .5rem;border-radius:10px;margin-bottom:.4rem}</style>`;
+
+// Finds the end of a <div class="business-list">...</div> block by depth-counting,
+// since it nests other <div>s (biz-card, website-link) that a naive regex would mis-match.
+function findDivBlockEnd(html, startIdx) {
+  let depth = 0, pos = startIdx;
+  while (pos < html.length) {
+    const nextOpen = html.indexOf("<div", pos);
+    const nextClose = html.indexOf("</div>", pos);
+    if (nextClose === -1) return -1;
+    if (nextOpen !== -1 && nextOpen < nextClose) {
+      depth++;
+      pos = nextOpen + 4;
+    } else {
+      depth--;
+      pos = nextClose + 6;
+      if (depth === 0) return pos;
+    }
+  }
+  return -1;
+}
+
+async function renderCategoryPage(request, env, url) {
+  const category = url.pathname.replace(/^\/category\//, "").replace(/\.html$/, "");
+  const resp = await env.ASSETS.fetch(request);
+  if (!resp.ok) return resp;
+  const html = await resp.text();
+
+  const startTag = '<div class="business-list">';
+  const startIdx = html.indexOf(startTag);
+  if (startIdx === -1) return new Response(html, { status: resp.status, headers: resp.headers });
+  const endIdx = findDivBlockEnd(html, startIdx);
+  if (endIdx === -1) return new Response(html, { status: resp.status, headers: resp.headers });
+
+  const rows = await env.LEADS.prepare(
+    `SELECT name, category, phone, address, website, premium FROM businesses
+     WHERE site=? AND category=? AND status='active'
+     ORDER BY premium DESC, sort_order ASC, name ASC`
+  ).bind(url.host, category).all();
+
+  const cards = (rows.results || []).map(bizCardHtml).join("\n            ");
+  const rendered = PREMIUM_CSS + startTag + "\n\n            " + cards + "\n    </div>";
+  const newHtml = html.slice(0, startIdx) + rendered + html.slice(endIdx);
+
+  return new Response(newHtml, { status: resp.status, headers: resp.headers });
+}
+
+/* ---------- premium listings: checkout + Stripe webhook ---------- */
+async function premiumCheckout(request, env, url) {
+  const data = await readBody(request);
+  const business = S(data.business, 200).trim();
+  const category = S(data.category, 60).toLowerCase().trim();
+  const phone = S(data.phone, 60);
+  const email = S(data.email, 200);
+  const plan = data.plan === "annual" ? "annual" : "monthly";
+  if (!business || !category || !email) return json({ status: "error", message: "business, category, and email are required" }, 400);
+
+  const priceId = plan === "annual" ? env.STRIPE_PRICE_ANNUAL : env.STRIPE_PRICE_MONTHLY;
+  if (!priceId || !env.STRIPE_SECRET_KEY) return json({ status: "error", message: "checkout not configured" }, 500);
+
+  const slug = slugify(business);
+  const upsert = await env.LEADS.prepare(
+    `INSERT INTO businesses (site, category, slug, name, phone, email, sort_order)
+     VALUES (?,?,?,?,?,?, 9999)
+     ON CONFLICT(site, category, slug) DO UPDATE SET phone=excluded.phone, email=excluded.email, updated_at=datetime('now')`
+  ).bind(url.host, category, slug, business, phone, email).run();
+
+  const row = await env.LEADS.prepare(
+    `SELECT id FROM businesses WHERE site=? AND category=? AND slug=?`
+  ).bind(url.host, category, slug).first();
+  if (!row) return json({ status: "error", message: "could not create listing" }, 500);
+
+  const form = new URLSearchParams({
+    mode: "subscription",
+    "line_items[0][price]": priceId,
+    "line_items[0][quantity]": "1",
+    client_reference_id: String(row.id),
+    customer_email: email,
+    success_url: `${url.origin}/premium-success.html?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${url.origin}/premium.html`,
+    "metadata[business_id]": String(row.id),
+    "metadata[site]": url.host,
+    "metadata[category]": category,
+    "metadata[plan]": plan,
+  });
+
+  const stripeResp = await fetch("https://api.stripe.com/v1/checkout/sessions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${env.STRIPE_SECRET_KEY}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: form,
+  });
+  const session = await stripeResp.json();
+  if (!stripeResp.ok) return json({ status: "error", message: session.error?.message || "stripe error" }, 502);
+
+  return json({ status: "ok", url: session.url });
+}
+
+async function verifyStripeSignature(rawBody, sigHeader, secret) {
+  if (!sigHeader) return false;
+  const parts = Object.fromEntries(sigHeader.split(",").map((p) => p.split("=")));
+  const t = parts.t, v1 = parts.v1;
+  if (!t || !v1) return false;
+  if (Math.abs(Date.now() / 1000 - Number(t)) > 300) return false; // reject stale (>5min) to avoid replay
+
+  const key = await crypto.subtle.importKey(
+    "raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]
+  );
+  const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(`${t}.${rawBody}`));
+  const digest = [...new Uint8Array(sig)].map((b) => b.toString(16).padStart(2, "0")).join("");
+  return digest === v1;
+}
+
+async function stripeWebhook(request, env) {
+  const rawBody = await request.text();
+  const ok = await verifyStripeSignature(rawBody, request.headers.get("Stripe-Signature"), env.STRIPE_WEBHOOK_SECRET);
+  if (!ok) return new Response("invalid signature", { status: 400 });
+
+  const event = JSON.parse(rawBody);
+  const obj = event.data?.object || {};
+
+  if (event.type === "checkout.session.completed") {
+    const businessId = parseInt(obj.client_reference_id, 10);
+    if (businessId) {
+      const plan = obj.metadata?.plan === "annual" ? "annual" : "monthly";
+      await env.LEADS.prepare(
+        `UPDATE businesses SET premium=1, premium_plan=?, status='active',
+         stripe_customer_id=?, stripe_subscription_id=?, updated_at=datetime('now') WHERE id=?`
+      ).bind(plan, S(obj.customer, 200), S(obj.subscription, 200), businessId).run();
+      const biz = await env.LEADS.prepare(`SELECT site, name, email FROM businesses WHERE id=?`).bind(businessId).first();
+      if (biz) {
+        await env.LEADS.prepare(
+          `INSERT INTO leads (site, source, business, email, interest, message, created_at)
+           VALUES (?,?,?,?,'premium-activated',?, datetime('now'))`
+        ).bind(biz.site, "stripe-webhook", biz.name, biz.email, `Premium ${plan} activated`).run();
+      }
+    }
+  } else if (event.type === "customer.subscription.deleted") {
+    const subId = S(obj.id, 200);
+    const biz = await env.LEADS.prepare(`SELECT id, site, name, email FROM businesses WHERE stripe_subscription_id=?`).bind(subId).first();
+    if (biz) {
+      await env.LEADS.prepare(`UPDATE businesses SET premium=0, status='canceled', updated_at=datetime('now') WHERE id=?`).bind(biz.id).run();
+      await env.LEADS.prepare(
+        `INSERT INTO leads (site, source, business, email, interest, message, created_at)
+         VALUES (?,?,?,?,'premium-canceled',?, datetime('now'))`
+      ).bind(biz.site, "stripe-webhook", biz.name, biz.email, "Subscription ended").run();
+    }
+  }
+
+  return json({ status: "ok" });
 }
 
 /* ---------- shared HTML pages (lead thank-you) ---------- */

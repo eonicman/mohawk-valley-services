@@ -9,6 +9,10 @@
   "observability": {
     "enabled": true
   },
+  "vars": {
+    "STRIPE_PRICE_MONTHLY": "price_1TyXlzQts1c0fveCMjGkwyBc",
+    "STRIPE_PRICE_ANNUAL": "price_1TyXlzQts1c0fveCaU3g75jU"
+  },
   "assets": {
     "directory": ".",
     "binding": "ASSETS"

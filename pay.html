@@ -13,24 +13,53 @@
     .badge { display: inline-block; background: #4caf50; color: #fff; padding: .2rem .6rem; border-radius: 12px; font-size: .75rem; font-weight: 600; margin-bottom: .5rem; }
     .contact { text-align: center; margin-top: 1.5rem; color: #666; }
     .contact a { color: #8b6914; text-decoration: none; font-weight: 600; }
+    .signup-form { border: 2px solid #eee; border-radius: 12px; padding: 1.25rem; margin: 1rem 0; }
+    .signup-form label { display: block; font-size: .85rem; font-weight: 600; color: #333; margin: .6rem 0 .25rem; }
+    .signup-form input, .signup-form select { width: 100%; padding: .55rem .7rem; border: 1px solid #ccc; border-radius: 6px; font-size: .95rem; }
+    .signup-error { color: #b02a37; font-size: .85rem; margin-top: .5rem; display: none; }
+    .btn:disabled { opacity: .6; cursor: not-allowed; }
   </style>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2874546800688654" crossorigin="anonymous"></script>
 </head>
 <body>
   <h1>🚀 Upgrade Your Business Listing</h1>
   <p>Get featured, get leads, get customers. Start today.</p>
-  
+
+  <div class="signup-form">
+    <label for="pf-business">Business name</label>
+    <input type="text" id="pf-business" placeholder="Your business name" required>
+    <label for="pf-category">Category</label>
+    <select id="pf-category" required>
+      <option value="">Select a category&hellip;</option>
+      <option value="plumbing">Plumbing</option>
+      <option value="electrical">Electrical</option>
+      <option value="hvac">HVAC</option>
+      <option value="landscaping">Landscaping</option>
+      <option value="general-contracting">General Contracting</option>
+      <option value="roofing">Roofing</option>
+      <option value="painting">Painting</option>
+      <option value="cleaning">Cleaning</option>
+      <option value="computers">Computers</option>
+      <option value="well-septic">Well &amp; Septic</option>
+    </select>
+    <label for="pf-phone">Phone</label>
+    <input type="tel" id="pf-phone" placeholder="(555) 123-4567">
+    <label for="pf-email">Email</label>
+    <input type="email" id="pf-email" placeholder="you@yourbusiness.com" required>
+    <div class="signup-error" id="pf-error"></div>
+  </div>
+
   <div class="option">
     <h2>Premium Monthly — $29<span style="font-size:.85rem;color:#888;">/month</span></h2>
     <p>Featured placement, photos, reviews, direct leads, and more.</p>
-    <a href="https://buy.stripe.com/00wcN793VgVdaVT7F15c402" class="btn btn-monthly">⚡ Pay with Stripe — Monthly</a>
+    <a href="#" class="btn btn-monthly" data-plan="monthly" onclick="startCheckout(this); return false;">⚡ Start Monthly</a>
   </div>
 
   <div class="option annual">
     <span class="badge">SAVE $58/YEAR</span>
     <h2>Annual Saver — $290<span style="font-size:.85rem;color:#888;">/year (2 months free)</span></h2>
     <p>All Premium features. Priority support.</p>
-    <a href="https://buy.stripe.com/00wcN72Fx9sLbZX1gD5c403" class="btn btn-annual">⚡ Pay with Stripe — Annual</a>
+    <a href="#" class="btn btn-annual" data-plan="annual" onclick="startCheckout(this); return false;">⚡ Start Annual</a>
   </div>
 
   <div class="contact">
@@ -38,7 +67,42 @@
   </div>
 
   <p style="color: #888; text-align: center; margin-top: 1rem; font-size: .85rem;">
-    ⚡ Listing goes live within 24 hours of payment.
+    ⚡ Featured placement goes live automatically right after payment.
   </p>
+<script>
+async function startCheckout(btn) {
+  const business = document.getElementById('pf-business').value.trim();
+  const category = document.getElementById('pf-category').value;
+  const phone = document.getElementById('pf-phone').value.trim();
+  const email = document.getElementById('pf-email').value.trim();
+  const errEl = document.getElementById('pf-error');
+  errEl.style.display = 'none';
+  if (!business || !category || !email) {
+    errEl.textContent = 'Please fill in business name, category, and email above before checkout.';
+    errEl.style.display = 'block';
+    document.querySelector('.signup-form').scrollIntoView({ behavior: 'smooth' });
+    return;
+  }
+  const originalText = btn.textContent;
+  btn.textContent = 'Redirecting to checkout…';
+  try {
+    const resp = await fetch('/api/premium-checkout', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ business, category, phone, email, plan: btn.dataset.plan }),
+    });
+    const data = await resp.json();
+    if (data.status === 'ok' && data.url) {
+      window.location.href = data.url;
+    } else {
+      throw new Error(data.message || 'Checkout could not be started');
+    }
+  } catch (e) {
+    errEl.textContent = e.message || 'Something went wrong — please try again or call (855) ARIA-773.';
+    errEl.style.display = 'block';
+    btn.textContent = originalText;
+  }
+}
+</script>
 </body>
 </html>
