@@ -91,6 +91,24 @@
     <priority>0.9</priority>
   </url>
   <url>
+    <loc>https://mohawkvalleyservices.com/guides.html</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://mohawkvalleyservices.com/guides/plumbing.html</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://mohawkvalleyservices.com/guides/hvac.html</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://mohawkvalleyservices.com/privacy.html</loc>
     <lastmod>2026-07-11</lastmod>
     <changefreq>monthly</changefreq>
