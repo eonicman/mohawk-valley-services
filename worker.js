@@ -5,6 +5,9 @@
 //   POST /api/diy-review           -> store a guide review (diy_reviews, pending moderation)
 //   POST /api/diy-analytics/pageview -> store a pageview (diy_analytics)
 //   GET  /api/diy-top?category=..  -> top requested projects for a category (live ranking)
+//   GET  /api/diy-guides?category=..&limit=10 -> full guide content for the real top N in a
+//                                      category, ranked by live request popularity (falls back
+//                                      to curated insertion order when a guide has zero requests yet)
 //   GET  /category/*.html          -> static page with the .business-list re-rendered from D1
 //                                      (premium listings first), so premium activation shows up
 //                                      without hand-editing HTML
@@ -36,6 +39,7 @@ export default {
       if (p === "/api/diy-review" && request.method === "POST") return diyReview(request, env, url);
       if (p === "/api/diy-analytics/pageview" && request.method === "POST") return diyAnalytics(request, env, url);
       if (p === "/api/diy-top" && request.method === "GET") return diyTop(request, env, url);
+      if (p === "/api/diy-guides" && request.method === "GET") return diyGuidesList(request, env, url);
       if (p === "/api/_feed" && request.method === "GET") return feed(request, env, url);
       if (p === "/api/premium-checkout" && request.method === "POST") return premiumCheckout(request, env, url);
       if (p === "/stripe-webhook" && request.method === "POST") return stripeWebhook(request, env);
@@ -223,16 +227,25 @@ async function diyRequest(request, env, url) {
   const slug = slugify(project);
   const m = meta(request);
 
-  // 1) library hit? return the published guide instantly.
+  const email = S(data.email, 200);
+
+  // A request with an email is a real subscriber signal, whether or not the
+  // guide already exists in the library -- capture it into `leads` too so
+  // guide requests count as a lead-gen source, not just DIY plumbing.
+  if (email) {
+    await env.LEADS.prepare(
+      `INSERT INTO leads (site, source, business, name, phone, email, interest, message, raw_json, ua, ip, created_at)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?, datetime('now'))`
+    ).bind(url.host, "diy_guide_request", "", "", "", email, `${category}: ${project}`,
+           S(data.details, 2000), JSON.stringify(data).slice(0, 8000), m.ua, m.ip).run();
+  }
+
+  // 1) library hit? return the published guide instantly (full content).
   const g = await env.LEADS.prepare(
-    `SELECT project, tools_json, steps_json FROM diy_guides
-     WHERE site=? AND category=? AND slug=? AND status='published' LIMIT 1`
+    `SELECT * FROM diy_guides WHERE site=? AND category=? AND slug=? AND status='published' LIMIT 1`
   ).bind(url.host, category, slug).first();
   if (g) {
-    let tools = [], steps = [];
-    try { tools = JSON.parse(g.tools_json || "[]"); } catch (e) {}
-    try { steps = JSON.parse(g.steps_json || "[]"); } catch (e) {}
-    return json({ status: "existing", guide: { project: g.project, tools, steps } });
+    return json({ status: "existing", guide: guideRow(g) });
   }
 
   // 2) new request -> log it, return request_id for the email step.
@@ -240,7 +253,7 @@ async function diyRequest(request, env, url) {
     `INSERT INTO diy_requests (site, category, project, skill, details, email, page, ua, ip, created_at)
      VALUES (?,?,?,?,?,?,?,?,?, datetime('now'))`
   ).bind(url.host, category, project, S(data.skill, 60), S(data.details, 2000),
-         S(data.email, 200), S(data.page, 400), m.ua, m.ip).run();
+         email, S(data.page, 400), m.ua, m.ip).run();
   return json({ status: "new", request_id: res.meta.last_row_id });
 }
 
@@ -287,6 +300,40 @@ async function diyTop(request, env, url) {
          GROUP BY lower(project) ORDER BY n DESC LIMIT ?`).bind(url.host, limit);
   const rows = await q.all();
   return json({ status: "ok", category, top: (rows.results || []).map(r => ({ project: r.project, count: r.n })) });
+}
+
+function guideRow(g) {
+  let tools = [], steps = [];
+  try { tools = JSON.parse(g.tools_json || "[]"); } catch (e) {}
+  try { steps = JSON.parse(g.steps_json || "[]"); } catch (e) {}
+  return {
+    project: g.project, slug: g.slug, difficulty: g.difficulty,
+    time_est: g.time_est, cost_est: g.cost_est,
+    icon_emoji: g.icon_emoji, icon_bg: g.icon_bg,
+    description: g.description, tools, steps,
+    shop_link: g.shop_link, shop_label: g.shop_label,
+    warning_html: g.warning_html, tip_html: g.tip_html,
+    request_count: g.request_count || 0,
+  };
+}
+
+/* ---------- DIY: dynamic top-N guides (with full content) for a category ---------- */
+async function diyGuidesList(request, env, url) {
+  const category = S(url.searchParams.get("category"), 60).toLowerCase();
+  const limit = Math.min(parseInt(url.searchParams.get("limit"), 10) || 10, 25);
+  if (!category) return json({ status: "error", message: "category required" }, 400);
+  const rows = await env.LEADS.prepare(
+    `SELECT g.*, COALESCE(r.n, 0) AS request_count
+     FROM diy_guides g
+     LEFT JOIN (
+       SELECT lower(project) AS proj, category, COUNT(*) AS n
+       FROM diy_requests WHERE site=? GROUP BY lower(project), category
+     ) r ON r.proj = lower(g.project) AND r.category = g.category
+     WHERE g.site=? AND g.category=? AND g.status='published'
+     ORDER BY request_count DESC, g.id ASC
+     LIMIT ?`
+  ).bind(url.host, url.host, category, limit).all();
+  return json({ status: "ok", category, guides: (rows.results || []).map(guideRow) });
 }
 
 /* ---------- internal feed (token-gated) for the NightShift lead-monitor ---------- */
