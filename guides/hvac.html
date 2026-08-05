@@ -93,6 +93,261 @@
 <!-- AdSense -->
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2874546800688654" crossorigin="anonymous"></script>
 <script defer data-domain="mohawkvalleyservices.com" src="https://stats.eonic.cloud/js/script.js"></script>
+<style>
+/* ===== FLOATING DIY BUTTON ===== */
+.diy-float-btn {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 999;
+    background: linear-gradient(135deg, #8b6914, #6b5010);
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    padding: 14px 24px;
+    font-size: .95rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(139,105,20,.4);
+    transition: all .3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: inherit;
+}
+.diy-float-btn:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 6px 24px rgba(139,105,20,.5);
+}
+.diy-float-btn:active {
+    transform: scale(.95);
+}
+.diy-float-btn .icon {
+    font-size: 1.2rem;
+}
+/* Pulse animation to draw attention */
+@keyframes diyPulse {
+    0%, 100% { box-shadow: 0 4px 16px rgba(139,105,20,.4); }
+    50% { box-shadow: 0 4px 24px rgba(139,105,20,.7); }
+}
+.diy-float-btn.pulse {
+    animation: diyPulse 2s infinite;
+}
+
+/* ===== CUSTOM REQUEST MODAL ===== */
+.diy-modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,.6);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+.diy-modal-overlay.open {
+    display: flex;
+}
+.diy-modal {
+    background: #fff;
+    border-radius: 12px;
+    max-width: 480px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,.3);
+    animation: diyModalIn .3s ease;
+}
+@keyframes diyModalIn {
+    from { opacity: 0; transform: translateY(20px) scale(.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+.diy-modal-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.diy-modal-header h3 {
+    font-size: 1.1rem;
+    color: #1a1a2e;
+    margin: 0;
+}
+.diy-modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #888;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all .2s;
+}
+.diy-modal-close:hover {
+    background: #f8f9fa;
+    color: #1a1a2e;
+}
+.diy-modal-body {
+    padding: 1.25rem 1.5rem;
+}
+.diy-modal-body p {
+    font-size: .88rem;
+    color: #555;
+    margin-bottom: 1rem;
+    line-height: 1.5;
+}
+.diy-form-group {
+    margin-bottom: 1rem;
+}
+.diy-form-group label {
+    display: block;
+    font-size: .82rem;
+    font-weight: 600;
+    color: #1a1a2e;
+    margin-bottom: .4rem;
+}
+.diy-form-group input,
+.diy-form-group textarea,
+.diy-form-group select {
+    width: 100%;
+    padding: .6rem .8rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: .9rem;
+    font-family: inherit;
+    transition: border-color .2s;
+}
+.diy-form-group input:focus,
+.diy-form-group textarea:focus,
+.diy-form-group select:focus {
+    outline: none;
+    border-color: #3e6b3e;
+    box-shadow: 0 0 0 3px rgba(62,107,62,.1);
+}
+.diy-form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+.diy-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .75rem;
+}
+.diy-modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #f0f0f0;
+    display: flex;
+    gap: .5rem;
+    justify-content: flex-end;
+}
+.diy-modal-footer .diy-btn {
+    padding: .5rem 1.2rem;
+}
+
+/* Success state */
+.diy-success {
+    text-align: center;
+    padding: 2rem 1rem;
+}
+.diy-success .emoji {
+    font-size: 3rem;
+    margin-bottom: .5rem;
+}
+.diy-success h4 {
+    font-size: 1.1rem;
+    color: #1a1a2e;
+    margin-bottom: .5rem;
+}
+.diy-success p {
+    font-size: .88rem;
+    color: #555;
+    margin-bottom: 1rem;
+}
+
+/* ===== CUSTOM GUIDE RESULT ===== */
+.diy-custom-guide {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin-top: 1rem;
+    border-left: 3px solid #3e6b3e;
+}
+.diy-custom-guide h4 {
+    font-size: 1rem;
+    color: #1a1a2e;
+    margin-bottom: .5rem;
+}
+.diy-custom-guide .ai-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #3e6b3e, #1a1a2e);
+    color: #fff;
+    font-size: .7rem;
+    padding: .2rem .5rem;
+    border-radius: 4px;
+    margin-bottom: .75rem;
+}
+
+@media (max-width: 480px) {
+    .diy-float-btn {
+        bottom: 16px;
+        right: 16px;
+        padding: 12px 18px;
+        font-size: .85rem;
+    }
+    .diy-form-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Collapsible Guide Cards */
+.diy-card {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.diy-card.collapsed .diy-card-body,
+.diy-card.collapsed .diy-expand {
+    display: none;
+}
+
+.diy-card.collapsed {
+    padding-bottom: 1rem;
+}
+
+.diy-card-header {
+    pointer-events: none; /* Let click pass through to card */
+}
+
+.diy-card-header .expand-icon {
+    margin-left: auto;
+    font-size: 1.2rem;
+    transition: transform 0.3s ease;
+    pointer-events: none;
+}
+
+.diy-card.collapsed .expand-icon {
+    transform: rotate(0deg);
+}
+
+.diy-card:not(.collapsed) .expand-icon {
+    transform: rotate(180deg);
+}
+
+.diy-card-actions {
+    pointer-events: auto; /* Re-enable clicks on buttons */
+}
+</style>
+
 </head>
 <body>
 
@@ -270,6 +525,16 @@
         </div>
     </div>
 
+    
+    <div class="guide-section" style="border-left:3px solid #8b6914;">
+        <h3>🔧 Quick Fix Guides</h3>
+        <p>Fast, step-by-step guides for common hvac projects &mdash; ranked by what homeowners actually ask about. Don't see yours? Request one below and we'll build it for you.</p>
+        <div class="diy-grid" id="diy-grid" data-category="hvac" data-limit="10" style="min-height:400px;margin-top:1rem;"><p style="color:#888;padding:2rem 0;text-align:center;">Loading guides…</p></div>
+        <div style="text-align:center;margin-top:1rem;">
+            <button class="diy-btn diy-btn-primary" onclick="openDIYModal()">🔍 Request a Custom Guide</button>
+        </div>
+    </div>
+
     <!-- When to Call a Pro -->
     <div class="pro-call-section">
         <h3>When to Call a Pro</h3>
@@ -310,6 +575,50 @@
     <p>&copy; 2026 Mohawk Valley Services &mdash; Local Business Directory</p>
     <p style="margin-top:.5rem;"><a href="/contact.html">Contact Us</a> &bull; <a href="/">Home</a> &bull; <a href="/guides.html">Guides</a></p>
 </div>
+
+
+<div class="diy-modal-overlay" id="diyModalOverlay" onclick="closeDIYModal(event)">
+    <div class="diy-modal" onclick="event.stopPropagation()">
+        <div class="diy-modal-header">
+            <h3>🔨 Can't Find Your Project?</h3>
+            <button class="diy-modal-close" onclick="closeDIYModal()">&times;</button>
+        </div>
+        <div class="diy-modal-body" id="diyModalBody">
+            <p>🔍 <strong>Smart Search:</strong> Type your project and we'll instantly check our library.</p>
+            <form id="diyRequestForm" onsubmit="submitDIYRequest(event)">
+                <div class="diy-form-group">
+                    <label for="diyProject">What do you need help with? *</label>
+                    <input type="text" id="diyProject" name="project" placeholder="e.g., My AC is blowing warm air" required>
+                </div>
+                <div class="diy-form-row">
+                    <div class="diy-form-group">
+                        <label for="diySkill">Your Skill Level</label>
+                        <select id="diySkill" name="skill">
+                            <option value="beginner" selected>Beginner</option>
+                            <option value="intermediate">Intermediate</option>
+                            <option value="advanced">Advanced</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="diy-form-group">
+                    <label for="diyDetails">More Details (optional)</label>
+                    <textarea id="diyDetails" name="details" placeholder="Describe the problem, brand/model if known, what you've already tried..."></textarea>
+                </div>
+                <div class="diy-form-group">
+                    <label for="diyEmail">Your Email (to receive the guide) *</label>
+                    <input type="email" id="diyEmail" name="email" placeholder="you@example.com" required>
+                </div>
+                <div class="diy-modal-footer">
+                    <button type="button" class="diy-btn diy-btn-secondary" onclick="closeDIYModal()">Cancel</button>
+                    <button type="submit" class="diy-btn diy-btn-primary" id="diySubmitBtn">🔍 Search Library</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="/diy-dynamic.js"></script>
+<script src="/diy-modal.js"></script>
 
 </body>
 </html>
