@@ -624,6 +624,8 @@ function findDivBlockEnd(html, startIdx) {
 // below -- drop a new file there and add one line here to add a language.
 const ARIA_AD_VIDEO = {
   es: "/assets/media/aria-es.mp4",
+  pt: "/assets/media/aria-pt.mp4",
+  fr: "/assets/media/aria-fr.mp4",
 };
 
 function pickAdLang(request) {
