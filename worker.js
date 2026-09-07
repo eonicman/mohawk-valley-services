@@ -628,6 +628,8 @@ const ARIA_AD_VIDEO = {
   fr: "/assets/media/aria-fr.mp4",
   pl: "/assets/media/aria-pl.mp4",
   it: "/assets/media/aria-it.mp4",
+  ko: "/assets/media/aria-ko.mp4",
+  hi: "/assets/media/aria-hi.mp4",
 };
 
 function pickAdLang(request) {
