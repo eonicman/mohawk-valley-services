@@ -668,6 +668,8 @@ async function renderCategoryPage(request, env, url) {
   const parts = url.pathname.replace(/^\/category\//, "").replace(/\.html$/, "").split("/");
   const category = parts[0];
   const townSlug = parts[1] || null;
+  de: "/assets/media/aria-de.mp4",
+  ru: "/assets/media/aria-ru.mp4",
 
   if (townSlug) {
     const qualifies = await env.LEADS.prepare(
