@@ -4,3 +4,6 @@
 **/.DS_Store
 worker.js
 wrangler.jsonc
+**/*.bak*
+DESIGN.md*
+docs/**
