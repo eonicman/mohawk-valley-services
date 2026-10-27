@@ -387,6 +387,7 @@
             <!-- Contact form -->
             <form id="contact-form" action="/lead" method="POST" onsubmit="return submitForm(event)">
                 <input type="text" name="_gotcha" class="gotcha" tabindex="-1" autocomplete="off">
+                <input type="hidden" name="form_ts" id="configure-form-ts" value="">
                 <input type="hidden" name="source" id="form-source" value="aria-configure">
                 <input type="hidden" name="interest" id="form-interest" value="aria-configure">
                 <input type="hidden" name="config_json" id="form-config">
@@ -443,6 +444,7 @@
     </footer>
 
     <script>
+    document.getElementById('configure-form-ts').value = Date.now();
     // Wizard state
     const state = {
         industry: '',

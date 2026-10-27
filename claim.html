@@ -69,6 +69,7 @@
             .benefits { grid-template-columns: 1fr; }
             .header h1 { font-size: 1.5rem; }
         }
+        .gotcha { position: absolute; left: -9999px; }
     </style>
 </head>
 <body>
@@ -140,6 +141,8 @@
             <form id="claim-form" action="/lead" method="POST">
                 <input type="hidden" name="source" value="claim-listing">
                 <input type="hidden" name="site" id="claim-site">
+                <input type="hidden" name="form_ts" id="claim-form-ts" value="">
+                <input type="text" name="_gotcha" class="gotcha" tabindex="-1" autocomplete="off">
                 <div class="form-group">
                     <label for="claim-name">Your Name *</label>
                     <input type="text" id="claim-name" name="name" required placeholder="John Smith">
@@ -250,6 +253,7 @@
     <script>
         // Set site identifier
         document.getElementById('claim-site').value = window.location.hostname;
+        document.getElementById('claim-form-ts').value = Date.now();
 
         // Form submission
         document.getElementById('claim-form').addEventListener('submit', function(e) {

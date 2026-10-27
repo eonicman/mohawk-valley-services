@@ -229,10 +229,43 @@ const meta = (request) => ({
 });
 
 /* ---------- lead capture (contact + Aria forms) ---------- */
+
+// NANPA reserves 555-0100..0199 in every area code for fictional/placeholder use --
+// no real subscriber number is ever issued there. Also catch same-digit and
+// straight sequential runs, which are the other common bot-fill patterns.
+function isFakePhone(phone) {
+  let digits = (phone || "").replace(/\D/g, "");
+  if (digits.length === 11 && digits[0] === "1") digits = digits.slice(1);
+  if (digits.length !== 10) return false; // let length validation elsewhere handle this
+  const exch = digits.slice(3, 6);
+  const sub = digits.slice(6);
+  if (exch === "555" && sub >= "0100" && sub <= "0199") return true;
+  if (/^(\d)\1{9}$/.test(digits)) return true; // 1111111111
+  if (digits === "1234567890" || digits === "0123456789") return true;
+  return false;
+}
+
+// Silent drop: bots get the same thank-you page as everyone else, but the reason
+// is logged so a false positive on a real visitor can be spotted in Worker logs.
+function dropLead(url, reason) {
+  console.log(JSON.stringify({ event: "lead_dropped", reason, host: url.host }));
+  return html(thankYouPage(url.host, ""));
+}
+
 async function handleLead(request, env, url) {
   try {
     const data = await readBody(request);
-    if (S(data._gotcha, 10).trim() !== "") return html(thankYouPage(url.host, ""));
+    if (S(data._gotcha, 10).trim() !== "") return dropLead(url, "honeypot");
+
+    // Timing gate: every form now sets form_ts (ms epoch) on load via JS. A real
+    // person takes at least ~1.2s to fill fields; instant posts are bots that
+    // skip rendering/JS delay. Missing form_ts (e.g. very old cached page) is
+    // left alone rather than blocked, to avoid false-positives. A negative
+    // elapsed time means the visitor's clock runs ahead of ours, not a bot.
+    const formTs = Number(data.form_ts);
+    const elapsed = Date.now() - formTs;
+    if (formTs && elapsed >= 0 && elapsed < 1200) return dropLead(url, "too-fast");
+
     const business = S(data.business || data.business_name, 200);
     const name = S(data.name || data.contact_name, 200);
     const phone = S(data.phone, 60);
@@ -241,7 +274,19 @@ async function handleLead(request, env, url) {
     const message = S(data.message || data.notes, 4000);
     const source = S(data.source || url.host, 300);
     if (!email && !phone) return html(errorPage(url.host), 400);
+    if (isFakePhone(phone)) return dropLead(url, "fake-phone");
+
     const m = meta(request);
+
+    // Rate limit: same IP posting repeatedly in a short window is spam/bot churn,
+    // not a real prospect re-filling the form.
+    if (m.ip) {
+      const recent = await env.LEADS.prepare(
+        `SELECT COUNT(*) AS n FROM leads WHERE ip = ? AND created_at > datetime('now', '-10 minutes')`
+      ).bind(m.ip).first();
+      if (recent && recent.n >= 5) return dropLead(url, "rate-limit");
+    }
+
     await env.LEADS.prepare(
       `INSERT INTO leads (site, source, business, name, phone, email, interest, message, raw_json, ua, ip, created_at)
        VALUES (?,?,?,?,?,?,?,?,?,?,?, datetime('now'))`

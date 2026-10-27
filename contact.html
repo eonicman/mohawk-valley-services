@@ -18,6 +18,7 @@
         .btn { display: block; width: 100%; background: #e94560; color: #fff; padding: 1rem; border: none; border-radius: 6px; font-size: 1.1rem; font-weight: 600; cursor: pointer; }
         .btn:hover { background: #c23152; }
         .footer { background: #1a1a2e; color: #aaa; text-align: center; padding: 1.5rem; font-size: .85rem; margin-top: 2rem; }
+        .gotcha { position: absolute; left: -9999px; }
     </style>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2874546800688654" crossorigin="anonymous"></script>
 </head>
@@ -29,6 +30,8 @@
     <div class="container">
         <form action="/lead" method="POST">
             <input type="hidden" name="source" value="mohawkvalleyservices.com/contact.html">
+            <input type="hidden" name="form_ts" value="">
+            <input type="text" name="_gotcha" class="gotcha" tabindex="-1" autocomplete="off">
             <div class="form-group">
                 <label>Business Name *</label>
                 <input type="text" name="business" required>
@@ -68,5 +71,6 @@
 <div class="footer">
         <p>© 2026 Mohawk Valley Services</p>
     </div>
+    <script>document.querySelector('input[name="form_ts"]').value = Date.now();</script>
 </body>
 </html>
