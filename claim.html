@@ -71,6 +71,7 @@
         }
         .gotcha { position: absolute; left: -9999px; }
     </style>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body>
     <div class="header">
@@ -180,6 +181,7 @@
                     <label for="claim-message">Anything we should know?</label>
                     <textarea id="claim-message" name="message" rows="3" placeholder="Your relationship to the business, any corrections needed, etc."></textarea>
                 </div>
+                <div class="cf-turnstile" data-sitekey="0x4AAAAAAFoXnB1SRwWvT_HQ" style="margin:1rem 0;"></div>
                 <button type="submit" class="btn btn-accent">Claim My Free Listing →</button>
             </form>
             <div class="success-msg" id="claim-success">
@@ -270,7 +272,13 @@
                 form.style.display = 'none';
                 document.getElementById('claim-success').style.display = 'block';
             })
-            .catch(() => {
+            .catch((err) => {
+                // 400 = rejected (failed verification / missing contact details): let the visitor retry
+                if (err && err.status === 400) {
+                    alert('We could not send that. Please complete the verification check, confirm your phone or email, and try again.');
+                    if (window.turnstile) window.turnstile.reset();
+                    return;
+                }
                 // Fallback: still show success (the lead endpoint handles it)
                 form.style.display = 'none';
                 document.getElementById('claim-success').style.display = 'block';

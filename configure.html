@@ -147,6 +147,7 @@
     </style>
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2874546800688654" crossorigin="anonymous"></script>
     <script defer data-domain="mohawkvalleyservices.com" src="https://stats.eonic.cloud/js/script.js"></script>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body>
     <div class="header">
@@ -429,6 +430,7 @@
                     <a id="plan-link" href="#" class="btn btn-primary" style="display:inline-block;margin-top:.75rem;text-decoration:none;">Get Started →</a>
                 </div>
 
+                <div class="cf-turnstile" data-sitekey="0x4AAAAAAFoXnB1SRwWvT_HQ" style="margin:1rem 0;"></div>
                 <div class="nav-buttons" style="margin-top:1.5rem;">
                     <button class="btn btn-secondary" onclick="goStep(3)">← Back</button>
                     <button type="submit" class="btn btn-primary" id="submit-btn">Submit &amp; Get Started</button>
@@ -693,6 +695,7 @@
             }
         } catch (err) {
             alert('Something went wrong. Please try again or call us at (855) ARIA-773.');
+            if (window.turnstile) window.turnstile.reset();
             btn.disabled = false;
             btn.textContent = 'Submit & Get Started';
         }

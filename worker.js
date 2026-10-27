@@ -245,6 +245,25 @@ function isFakePhone(phone) {
   return false;
 }
 
+// Cloudflare Turnstile server-side check. Returns "pass", "fail", or "unavailable" (siteverify
+// unreachable: fail open and log, so a Cloudflare outage never blocks real leads). Skipped
+// entirely until the TURNSTILE_SECRET secret is set, so the code can ship before the widget.
+async function verifyTurnstile(secret, token, ip) {
+  if (!token) return "fail";
+  try {
+    const body = new URLSearchParams({ secret, response: token });
+    if (ip) body.set("remoteip", ip);
+    const resp = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+      method: "POST", body, signal: AbortSignal.timeout(4000),
+    });
+    if (!resp.ok) return "unavailable";
+    const out = await resp.json();
+    return out.success ? "pass" : "fail";
+  } catch (e) {
+    return "unavailable";
+  }
+}
+
 // Silent drop: bots get the same thank-you page as everyone else, but the reason
 // is logged so a false positive on a real visitor can be spotted in Worker logs.
 function dropLead(url, reason) {
@@ -275,6 +294,17 @@ async function handleLead(request, env, url) {
     const source = S(data.source || url.host, 300);
     if (!email && !phone) return html(errorPage(url.host), 400);
     if (isFakePhone(phone)) return dropLead(url, "fake-phone");
+
+    // Turnstile: a failed/missing token gets the normal error page (not a silent drop) so a real
+    // visitor whose token expired can retry; bots gain nothing from the distinction.
+    if (env.TURNSTILE_SECRET) {
+      const verdict = await verifyTurnstile(env.TURNSTILE_SECRET, S(data["cf-turnstile-response"], 4096), request.headers.get("cf-connecting-ip") || "");
+      if (verdict === "fail") {
+        console.log(JSON.stringify({ event: "lead_rejected", reason: "turnstile", host: url.host }));
+        return html(errorPage(url.host), 400);
+      }
+      if (verdict === "unavailable") console.log(JSON.stringify({ event: "turnstile_unavailable", host: url.host }));
+    }
 
     const m = meta(request);
 
