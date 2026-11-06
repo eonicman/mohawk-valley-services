@@ -798,14 +798,17 @@ async function renderCategoryPage(request, env, url) {
     ).bind(url.host, category).all();
     if (towns.results?.length) {
       const links = towns.results.map(t =>
-        `<a href="/category/${category}/${t.town_slug}.html" style="margin-right:.75rem;">${escapeHtml(t.town)}</a>`
+        `<a href="/category/${category}/${t.town_slug}" style="margin-right:.75rem;">${escapeHtml(t.town)}</a>`
       ).join("");
       introHtml = `<div style="margin-bottom:1rem;font-size:.9rem;">Browse by town: ${links}</div>`;
     }
   }
 
   const rendered = PREMIUM_CSS + introHtml + startTag + "\n\n            " + cards + "\n    </div>";
-  const newHtml = html.slice(0, startIdx) + rendered + html.slice(endIdx);
+  const canonUrl = `${url.origin}/category/${category}${townSlug ? "/" + townSlug : ""}`;
+  const newHtml = (html.slice(0, startIdx) + rendered + html.slice(endIdx))
+    .replace(/(<link[^>]+rel="canonical"[^>]*href=")[^"]*(")/i, `$1${canonUrl}$2`)
+    .replace(/(<meta[^>]+property="og:url"[^>]*content=")[^"]*(")/i, `$1${canonUrl}$2`);
 
   return new Response(newHtml, { status: resp.status, headers: resp.headers });
 }
@@ -906,7 +909,10 @@ async function renderGuidePage(request, env, url) {
 
   const openTag = html.slice(startIdx, startIdx + gridMatch[0].length);
   const rendered = openTag + "\n" + cardsHtml + "\n    </div>";
-  const newHtml = html.slice(0, startIdx) + rendered + html.slice(endIdx);
+  const canonUrl = `${url.origin}/category/${category}${townSlug ? "/" + townSlug : ""}`;
+  const newHtml = (html.slice(0, startIdx) + rendered + html.slice(endIdx))
+    .replace(/(<link[^>]+rel="canonical"[^>]*href=")[^"]*(")/i, `$1${canonUrl}$2`)
+    .replace(/(<meta[^>]+property="og:url"[^>]*content=")[^"]*(")/i, `$1${canonUrl}$2`);
 
   return new Response(newHtml, { status: resp.status, headers: resp.headers });
 }
