@@ -36,7 +36,7 @@
 
 const SITE_HOST = "mohawkvalleyservices.com";
 const SITE_NAME = "Mohawk Valley Services";
-const guideUrl = (cat, slug) => `https://mohawkvalleyservices.com/guides/${cat}.html#${slug}`;
+const guideUrl = (cat, slug) => `https://mohawkvalleyservices.com/guides/${cat}#${slug}`;
 
 export default {
   async fetch(request, env, ctx) {
@@ -949,8 +949,8 @@ async function premiumCheckout(request, env, url) {
     "line_items[0][quantity]": "1",
     client_reference_id: String(row.id),
     customer_email: email,
-    success_url: `${url.origin}/premium-success.html?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${url.origin}/premium.html`,
+    success_url: `${url.origin}/premium-success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${url.origin}/premium`,
     "metadata[business_id]": String(row.id),
     "metadata[site]": url.host,
     "metadata[category]": category,
