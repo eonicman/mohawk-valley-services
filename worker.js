@@ -909,7 +909,7 @@ async function renderGuidePage(request, env, url) {
 
   const openTag = html.slice(startIdx, startIdx + gridMatch[0].length);
   const rendered = openTag + "\n" + cardsHtml + "\n    </div>";
-  const canonUrl = `${url.origin}/category/${category}${townSlug ? "/" + townSlug : ""}`;
+  const canonUrl = `${url.origin}/guides/${category}`;
   const newHtml = (html.slice(0, startIdx) + rendered + html.slice(endIdx))
     .replace(/(<link[^>]+rel="canonical"[^>]*href=")[^"]*(")/i, `$1${canonUrl}$2`)
     .replace(/(<meta[^>]+property="og:url"[^>]*content=")[^"]*(")/i, `$1${canonUrl}$2`);
